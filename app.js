@@ -1,4 +1,3 @@
-// Define the API key once at the top of the file
 const apiKey = "a76b3aa1f366db199406e6441da00945"; // Replace with your actual API key
 
 document.getElementById("getWeather").addEventListener("click", function() {
@@ -59,8 +58,13 @@ async function getWeatherByLocation(lat, lon, units) {
 function displayWeather(data, units) {
     const tempUnit = units === "metric" ? "°C" : "°F";
     const windSpeedUnit = units === "metric" ? "m/s" : "miles/h";
+    const iconUrl = `http://openweathermap.org/img/wn/${data.weather[0].icon}.png`;
+
     const weatherInfo = `
-        <h2>${data.name}, ${data.sys.country}</h2>
+        <div class="weather-header">
+            <h2>${data.name}, ${data.sys.country}</h2>
+            <img src="${iconUrl}" alt="${data.weather[0].description}" class="weather-icon">
+        </div>
         <p>Temperature: ${data.main.temp.toFixed(1)}${tempUnit}</p>
         <p>Weather: ${data.weather[0].description}</p>
         <p>Humidity: ${data.main.humidity}%</p>
