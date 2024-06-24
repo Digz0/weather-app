@@ -1,30 +1,32 @@
+// Define the API key once at the top of the file
+const apiKey = "a76b3aa1f366db199406e6441da00945"; // Replace with your actual API key
+
 document.getElementById("getWeather").addEventListener("click", function() {
-    const city = document.getElementById("city").value;
+    const city = document.getElementById("city").value.trim();
     const units = document.getElementById("units").value;
     if (city) {
         getWeather(city, units);
     } else {
-        alert("Please enter a city name.");
+        displayError("Please enter a city name.");
     }
 });
 
 document.getElementById("getLocationWeather").addEventListener("click", function() {
     const units = document.getElementById("units").value;
     if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(function(position) {
+        navigator.geolocation.getCurrentPosition(position => {
             const lat = position.coords.latitude;
             const lon = position.coords.longitude;
             getWeatherByLocation(lat, lon, units);
-        }, function(error) {
-            alert("Unable to retrieve your location.");
+        }, () => {
+            displayError("Unable to retrieve your location.");
         });
     } else {
-        alert("Geolocation is not supported by this browser.");
+        displayError("Geolocation is not supported by this browser.");
     }
 });
 
 async function getWeather(city, units) {
-    const apiKey = "a76b3aa1f366db199406e6441da00945";
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}`;
 
     try {
@@ -35,12 +37,11 @@ async function getWeather(city, units) {
         const data = await response.json();
         displayWeather(data, units);
     } catch (error) {
-        document.getElementById("weatherInfo").innerHTML = `<p>${error.message}</p>`;
+        displayError(error.message);
     }
 }
 
 async function getWeatherByLocation(lat, lon, units) {
-    const apiKey = "a76b3aa1f366db199406e6441da00945";
     const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=${units}`;
 
     try {
@@ -51,18 +52,23 @@ async function getWeatherByLocation(lat, lon, units) {
         const data = await response.json();
         displayWeather(data, units);
     } catch (error) {
-        document.getElementById("weatherInfo").innerHTML = `<p>${error.message}</p>`;
+        displayError(error.message);
     }
 }
 
 function displayWeather(data, units) {
     const tempUnit = units === "metric" ? "°C" : "°F";
+    const windSpeedUnit = units === "metric" ? "m/s" : "miles/h";
     const weatherInfo = `
         <h2>${data.name}, ${data.sys.country}</h2>
-        <p>Temperature: ${data.main.temp}${tempUnit}</p>
+        <p>Temperature: ${data.main.temp.toFixed(1)}${tempUnit}</p>
         <p>Weather: ${data.weather[0].description}</p>
         <p>Humidity: ${data.main.humidity}%</p>
-        <p>Wind Speed: ${data.wind.speed} m/s</p>
+        <p>Wind Speed: ${data.wind.speed} ${windSpeedUnit}</p>
     `;
     document.getElementById("weatherInfo").innerHTML = weatherInfo;
+}
+
+function displayError(message) {
+    document.getElementById("weatherInfo").innerHTML = `<p class="error">${message}</p>`;
 }
