@@ -1,13 +1,7 @@
 const apiKey = "a76b3aa1f366db199406e6441da00945"; // Replace with your actual API key
 
 document.getElementById("getWeather").addEventListener("click", function() {
-    const city = document.getElementById("city").value.trim();
-    const units = document.getElementById("units").value;
-    if (city) {
-        getWeather(city, units);
-    } else {
-        displayError("Please enter a city name.");
-    }
+    getWeatherFromInput();
 });
 
 document.getElementById("getLocationWeather").addEventListener("click", function() {
@@ -24,6 +18,23 @@ document.getElementById("getLocationWeather").addEventListener("click", function
         displayError("Geolocation is not supported by this browser.");
     }
 });
+
+// Event listener for the Enter key in the city input field
+document.getElementById("city").addEventListener("keypress", function(event) {
+    if (event.key === "Enter") {
+        getWeatherFromInput();
+    }
+});
+
+function getWeatherFromInput() {
+    const city = document.getElementById("city").value.trim();
+    const units = document.getElementById("units").value;
+    if (city) {
+        getWeather(city, units);
+    } else {
+        displayError("Please enter a city name.");
+    }
+}
 
 async function getWeather(city, units) {
     const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}`;
