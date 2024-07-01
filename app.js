@@ -1,89 +1,78 @@
-const apiKey = "a76b3aa1f366db199406e6441da00945"; // Replace with your actual API key
+const BASE_URL = 'https://api.openweathermap.org/data/2.5/weather';
+const storage = localStorage;
 
-document.getElementById("getWeather").addEventListener("click", function() {
-    getWeatherFromInput();
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById("apiKey").value = storage.getItem('apiKey') || '';
+    document.getElementById("getWeather").addEventListener("click", getWeather);
+    document.getElementById("getLocationWeather").addEventListener("click", getLocationWeather);
+    document.getElementById("city").addEventListener("keypress", e => e.key === "Enter" && getWeather());
+    document.getElementById("metricUnit").addEventListener("click", () => setUnit("metric"));
+    document.getElementById("imperialUnit").addEventListener("click", () => setUnit("imperial"));
 });
 
-document.getElementById("getLocationWeather").addEventListener("click", function() {
-    const units = document.getElementById("units").value;
-    if (navigator.geolocation) {
-        navigator.geolocation.getCurrentPosition(position => {
-            const lat = position.coords.latitude;
-            const lon = position.coords.longitude;
-            getWeatherByLocation(lat, lon, units);
-        }, () => {
-            displayError("Unable to retrieve your location.");
-        });
-    } else {
-        displayError("Geolocation is not supported by this browser.");
-    }
-});
+function setUnit(unit) {
+    ["metricUnit", "imperialUnit"].forEach(id => 
+        document.getElementById(id).classList.toggle("active", id.startsWith(unit))
+    );
+}
 
-// Event listener for the Enter key in the city input field
-document.getElementById("city").addEventListener("keypress", function(event) {
-    if (event.key === "Enter") {
-        getWeatherFromInput();
-    }
-});
-
-function getWeatherFromInput() {
+async function getWeather() {
     const city = document.getElementById("city").value.trim();
-    const units = document.getElementById("units").value;
-    if (city) {
-        getWeather(city, units);
-    } else {
-        displayError("Please enter a city name.");
-    }
+    if (!city) return showMessage("Please enter a city name.", "error");
+    fetchWeather(`${BASE_URL}?q=${city}&units=${getUnits()}`);
 }
 
-async function getWeather(city, units) {
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${apiKey}&units=${units}`;
+function getLocationWeather() {
+    if (!navigator.geolocation) return showMessage("Geolocation is not supported by this browser.", "error");
+    
+    showMessage("Loading weather data...");
+    navigator.geolocation.getCurrentPosition(
+        pos => fetchWeather(`${BASE_URL}?lat=${pos.coords.latitude}&lon=${pos.coords.longitude}&units=${getUnits()}`),
+        () => showMessage("Unable to retrieve your location.", "error")
+    );
+}
 
+async function fetchWeather(url) {
+    const apiKey = document.getElementById("apiKey").value.trim();
+    if (!apiKey) return showMessage("Please enter your API key.", "error");
+    storage.setItem('apiKey', apiKey);
+    
     try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error("City not found");
-        }
-        const data = await response.json();
-        displayWeather(data, units);
+        const response = await fetch(`${url}&appid=${apiKey}`);
+        if (!response.ok) throw new Error("City not found or unable to retrieve weather data.");
+        displayWeather(await response.json());
     } catch (error) {
-        displayError(error.message);
+        showMessage(error.message, "error");
     }
 }
 
-async function getWeatherByLocation(lat, lon, units) {
-    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=${units}`;
-
-    try {
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error("Unable to retrieve weather data");
-        }
-        const data = await response.json();
-        displayWeather(data, units);
-    } catch (error) {
-        displayError(error.message);
-    }
-}
-
-function displayWeather(data, units) {
-    const tempUnit = units === "metric" ? "°C" : "°F";
-    const windSpeedUnit = units === "metric" ? "m/s" : "miles/h";
-    const iconUrl = `http://openweathermap.org/img/wn/${data.weather[0].icon}.png`;
-
-    const weatherInfo = `
-        <div class="weather-header">
-            <h2>${data.name}, ${data.sys.country}</h2>
-            <img src="${iconUrl}" alt="${data.weather[0].description}" class="weather-icon">
-        </div>
+function displayWeather(data) {
+    const units = getUnits();
+    const tempUnit = units === 'imperial' ? '°F' : '°C';
+    const speedUnit = units === 'imperial' ? 'mph' : 'm/s';
+    
+    document.getElementById("weatherInfo").innerHTML = `
+        <h2>${data.name}, ${data.sys.country}</h2>
+        <p><i class="${getWeatherIconClass(data.weather[0].icon)}"></i> ${data.weather[0].description}</p>
         <p>Temperature: ${data.main.temp.toFixed(1)}${tempUnit}</p>
-        <p>Weather: ${data.weather[0].description}</p>
         <p>Humidity: ${data.main.humidity}%</p>
-        <p>Wind Speed: ${data.wind.speed} ${windSpeedUnit}</p>
+        <p>Wind: ${data.wind.speed.toFixed(1)} ${speedUnit}</p>
     `;
-    document.getElementById("weatherInfo").innerHTML = weatherInfo;
 }
 
-function displayError(message) {
-    document.getElementById("weatherInfo").innerHTML = `<p class="error">${message}</p>`;
+function getUnits() {
+    return document.getElementById("metricUnit").classList.contains("active") ? "metric" : "imperial";
+}
+
+function getWeatherIconClass(iconCode) {
+    const iconMap = {
+        '01': 'wi-day-sunny', '02': 'wi-day-cloudy', '03': 'wi-cloud', '04': 'wi-cloudy',
+        '09': 'wi-showers', '10': 'wi-day-rain', '11': 'wi-thunderstorm',
+        '13': 'wi-snow', '50': 'wi-fog'
+    };
+    return `wi ${iconMap[iconCode.slice(0, 2)] || 'wi-na'}`;
+}
+
+function showMessage(message, type = "") {
+    document.getElementById("weatherInfo").innerHTML = `<p class="${type}">${message}</p>`;
 }

@@ -5,21 +5,24 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Weather App</title>
     <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/x-icon" href="favicon.ico">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/weather-icons/2.0.10/css/weather-icons.min.css">
 </head>
 <body>
-    <div id="app">
+    <div class="container">
         <h1>Weather App</h1>
-        <div class="input-group">
+        <div id="search-bar">
+            <input type="text" id="apiKey" placeholder="Enter API key" aria-label="API Key">
             <input type="text" id="city" placeholder="Enter city name" aria-label="City Name">
-            <select id="units" aria-label="Temperature Units">
-                <option value="metric">Celsius</option>
-                <option value="imperial">Fahrenheit</option>
-            </select>
-            <button id="getWeather" aria-label="Get Weather">Get Weather</button>
-            <button id="getLocationWeather" aria-label="Get Local Weather">Get Local Weather</button>
+            <button id="getWeather">Search</button>
         </div>
-        <div id="weatherInfo" class="weather-info"></div>
+        <div id="options">
+            <button id="getLocationWeather">Use My Location</button>
+            <div id="unitButtons">
+                <button id="metricUnit" class="unit-btn active">°C</button>
+                <button id="imperialUnit" class="unit-btn">°F</button>
+            </div>
+        </div>
+        <div id="weatherInfo"></div>
     </div>
     <script src="app.js"></script>
 </body>
